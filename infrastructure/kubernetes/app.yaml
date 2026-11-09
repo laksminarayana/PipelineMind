@@ -1,0 +1,153 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pipelinemind-config
+data:
+  GROQ_MODEL: openai/gpt-oss-120b
+  HINDSIGHT_API_URL: http://hindsight:8888
+  HINDSIGHT_BANK_ID: pipelinemind-devops
+  PORT: "8000"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pipelinemind-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pipelinemind-backend
+  labels:
+    app: pipelinemind-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pipelinemind-backend
+  template:
+    metadata:
+      labels:
+        app: pipelinemind-backend
+    spec:
+      containers:
+        - name: backend
+          image: ghcr.io/your-org/pipelinemind-backend:latest
+          ports:
+            - name: http
+              containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: pipelinemind-config
+          env:
+            - name: GROQ_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: pipelinemind-secrets
+                  key: GROQ_API_KEY
+                  optional: true
+            - name: HINDSIGHT_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: pipelinemind-secrets
+                  key: HINDSIGHT_API_KEY
+                  optional: true
+          volumeMounts:
+            - name: data
+              mountPath: /app/backend/data
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: pipelinemind-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pipelinemind-backend
+spec:
+  selector:
+    app: pipelinemind-backend
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pipelinemind-frontend
+  labels:
+    app: pipelinemind-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pipelinemind-frontend
+  template:
+    metadata:
+      labels:
+        app: pipelinemind-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: ghcr.io/your-org/pipelinemind-frontend:latest
+          ports:
+            - name: http
+              containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pipelinemind-frontend
+spec:
+  selector:
+    app: pipelinemind-frontend
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+  type: ClusterIP

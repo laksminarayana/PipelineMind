@@ -1,0 +1,49 @@
+{
+  "annotations": { "list": [] },
+  "editable": false,
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "short" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "id": 1,
+      "targets": [{ "expr": "pipelinemind_deployments_total", "legendFormat": "{{status}} / {{strategy}}", "refId": "A" }],
+      "title": "Deployments",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "s" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "targets": [{ "expr": "rate(pipelinemind_pipeline_duration_seconds_sum[5m]) / clamp_min(rate(pipelinemind_pipeline_duration_seconds_count[5m]), 1)", "legendFormat": "Mean pipeline duration", "refId": "A" }],
+      "title": "Pipeline duration",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "short" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "id": 3,
+      "targets": [{ "expr": "pipelinemind_incidents_total", "legendFormat": "{{stage}}", "refId": "A" }],
+      "title": "Incidents",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "short" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "id": 4,
+      "targets": [{ "expr": "pipelinemind_hindsight_memories_total", "legendFormat": "Retained memories", "refId": "A" }],
+      "title": "Hindsight memories",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["pipelinemind"],
+  "time": { "from": "now-6h", "to": "now" },
+  "title": "PipelineMind",
+  "uid": "pipelinemind",
+  "version": 1
+}
